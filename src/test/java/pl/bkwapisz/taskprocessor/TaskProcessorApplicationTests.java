@@ -1,13 +1,11 @@
 package pl.bkwapisz.taskprocessor;
 
 import org.junit.jupiter.api.Test;
-import org.springframework.boot.test.context.SpringBootTest;
 
-@SpringBootTest
-class TaskProcessorApplicationTests {
+class TaskProcessorApplicationTests extends TaskProcessorAbstractIntegrationTest {
 
-	@Test
-	void contextLoads() {
-	}
+    @Test
+    void contextLoads() {
+    }
 
 }
