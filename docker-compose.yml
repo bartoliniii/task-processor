@@ -1,0 +1,34 @@
+version: "3.8"
+services:
+  mongodb:
+    image: mongo:6.0
+    ports:
+      - "27017:27017"
+    command: mongod --quiet --logpath /dev/null
+    healthcheck:
+      test: mongosh --quiet --eval 'db.runCommand("ping").ok'
+      interval: 5s
+      timeout: 5s
+      retries: 10
+  rabbitmq:
+    image: rabbitmq:3.11-management
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    healthcheck:
+      test: rabbitmq-diagnostics -q ping
+      interval: 5s
+      timeout: 5s
+      retries: 10
+  app:
+    build: .
+    ports:
+      - "8080:8080"
+    environment:
+      - MONGO_URI=mongodb://mongodb/test
+      - RABBITMQ_HOSTNAME=rabbitmq
+    depends_on:
+      mongodb:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
