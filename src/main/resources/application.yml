@@ -1,4 +1,10 @@
+logging:
+  level:
+    ROOT: INFO
+
 spring:
+  jackson:
+    default-property-inclusion: NON_NULL
   data:
     mongodb:
       uri: ${MONGO_URI:mongodb://localhost/test}

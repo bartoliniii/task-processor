@@ -1,6 +1,5 @@
 package pl.bkwapisz.taskprocessor;
 
-import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.runner.RunWith;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -13,7 +12,7 @@ import org.testcontainers.junit.jupiter.Testcontainers;
 @Testcontainers
 @RunWith(SpringRunner.class)
 @SpringBootTest
-abstract class TaskProcessorAbstractIntegrationTest {
+public abstract class TaskProcessorAbstractIntegrationTest {
 
     @Container
     public static MongoDBContainer MONGODB_CONTAINER = new MongoDBContainer("mongo:6.0");
@@ -23,17 +22,7 @@ abstract class TaskProcessorAbstractIntegrationTest {
 
     @BeforeAll
     public static void prepareContainers() {
-        MONGODB_CONTAINER.withReuse(true);
-        MONGODB_CONTAINER.start();
         System.setProperty("MONGO_URI", MONGODB_CONTAINER.getReplicaSetUrl());
-
-        RABBITMQ_CONTAINER.withReuse(true);
-        RABBITMQ_CONTAINER.start();
         System.setProperty("RABBITMQ_PORT", String.valueOf(RABBITMQ_CONTAINER.getAmqpPort()));
-    }
-
-    @AfterAll
-    public static void turnOffContainers() {
-        MONGODB_CONTAINER.stop();
     }
 }
