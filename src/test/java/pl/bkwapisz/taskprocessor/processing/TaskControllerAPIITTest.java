@@ -1,7 +1,7 @@
 package pl.bkwapisz.taskprocessor.processing;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.jayway.jsonpath.JsonPath;
+import groovy.time.TimeDuration;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.jetbrains.annotations.NotNull;
@@ -10,6 +10,7 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
+import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.ResultActions;
@@ -22,22 +23,15 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 @Slf4j
 @AutoConfigureMockMvc
-class SimpleTaskControllerAPITest extends TaskProcessorAbstractIntegrationTest {
-
-    record CreateTaskInput(String input, String pattern) {
-        static CreateTaskInput createNotEmpty() {
-            return new CreateTaskInput("input", "pattern");
-        }
-    }
+@SpringBootTest(properties = {"taskProcessor.rabbitmq.taskProcessorEnabled=false"})
+class TaskControllerAPIITTest extends TaskProcessorAbstractIntegrationTest {
 
     @Autowired
     private MockMvc mockMvc;
-    @Autowired
-    private ObjectMapper objectMapper;
 
     @Test
     void shouldCreateNewTaskAndReturnId() throws Exception {
-        callCreateTask(CreateTaskInput.createNotEmpty())
+        callCreateTask(TaskInputForTestRequest.createNotEmpty())
                 .andExpect(status().isOk())
                 .andExpect(content().contentType(MediaType.APPLICATION_JSON))
                 .andExpect(jsonPath("$.id", not(empty())));
@@ -55,7 +49,7 @@ class SimpleTaskControllerAPITest extends TaskProcessorAbstractIntegrationTest {
             '',
             """)
     void shouldReturnBadRequestForIncompleteParametersSet(final String inputParam, final String patternParam) throws Exception {
-        callCreateTask(new CreateTaskInput(inputParam, patternParam))
+        callCreateTask(new TaskInputForTestRequest(inputParam, patternParam))
                 .andExpect(status().isBadRequest());
     }
 
@@ -67,14 +61,13 @@ class SimpleTaskControllerAPITest extends TaskProcessorAbstractIntegrationTest {
 
     @Test
     void shouldReturnStatusOfAlreadyCreatedTask() throws Exception {
-        // given
-        final var response = callCreateTask(CreateTaskInput.createNotEmpty())
+        // when
+        final var response = callCreateTask(TaskInputForTestRequest.createNotEmpty())
                 .andExpect(status().isOk())
                 .andExpect(content().contentType(MediaType.APPLICATION_JSON))
                 .andReturn()
                 .getResponse();
         log.info("got response: {}", response.getContentAsString());
-
         final var taskId = JsonPath.read(response.getContentAsString(), "$.id");
 
         // then
@@ -86,7 +79,7 @@ class SimpleTaskControllerAPITest extends TaskProcessorAbstractIntegrationTest {
     }
 
     @NotNull
-    private ResultActions callCreateTask(final CreateTaskInput input) throws Exception {
+    private ResultActions callCreateTask(final TaskInputForTestRequest input) throws Exception {
         return mockMvc.perform(
                 post("/task")
                         .contentType(MediaType.APPLICATION_JSON)

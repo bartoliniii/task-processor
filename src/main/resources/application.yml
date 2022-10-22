@@ -1,6 +1,7 @@
 logging:
   level:
     ROOT: INFO
+    pl.bkwapisz.taskprocessor: DEBUG
 
 spring:
   jackson:
@@ -13,3 +14,16 @@ spring:
     port: ${RABBITMQ_PORT:5672}
     username: ${RABBITMQ_USERNAME:guest}
     password: ${RABBITMQ_PASSWORD:guest}
+    listener:
+      simple:
+        retry:
+          enabled: true
+          initial-interval: 1s
+          max-attempts: 3
+          multiplier: 3
+
+taskProcessor:
+  rabbitmq:
+    taskProcessorEnabled: true
+    tasksQueueName: "dev-tasks"
+    tasksQueueListenerConcurrency: "8-8"

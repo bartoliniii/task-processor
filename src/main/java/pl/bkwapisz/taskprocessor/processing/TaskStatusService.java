@@ -1,10 +1,7 @@
 package pl.bkwapisz.taskprocessor.processing;
 
 import lombok.RequiredArgsConstructor;
-import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.stereotype.Service;
-import pl.bkwapisz.taskprocessor.processing.dtos.Task;
-import pl.bkwapisz.taskprocessor.processing.dtos.TaskInput;
 
 import java.util.Optional;
 
@@ -12,23 +9,42 @@ import java.util.Optional;
 @RequiredArgsConstructor
 class TaskStatusService {
 
-    private static String exchangeName = "testExchange";
-
     private final TaskStatusRepository taskStatusRepository;
-    private final RabbitTemplate rabbitTemplate;
 
-    public TaskStatus createTask(final String input, final String pattern) {
-        //todo extract to separate service handing status
-        final var savedTask = taskStatusRepository.save(TaskStatus.createNewTaskStatus());
-        rabbitTemplate.convertAndSend(exchangeName, new Task(savedTask.id(), new TaskInput(input, pattern)));
-        return savedTask;
-    }
-
-    public Optional<TaskStatus> getTaskStatus(final String taskId) {
-        return taskStatusRepository.findById(taskId);
+    public TaskStatus createNewTaskStatus() {
+        return taskStatusRepository.save(TaskStatus.createNew());
     }
 
     public Iterable<TaskStatus> getAllTaskStatuses() {
         return taskStatusRepository.findAll();
+    }
+
+    public void updateTaskProgress(final String taskId, final int progress) {
+        final var statusToUpdate = getTaskStatus(taskId);
+        taskStatusRepository.save(statusToUpdate.withProgress(progress));
+    }
+
+    public void markTaskAsBeingProcessed(final String taskId) {
+        final var statusToUpdate = getTaskStatus(taskId);
+        taskStatusRepository.save(statusToUpdate.asProcessing());
+    }
+
+    public void markTaskAsFailed(final String taskId) {
+        final var statusToUpdate = getTaskStatus(taskId);
+        taskStatusRepository.save(statusToUpdate.asFailed());
+    }
+
+    public void markTaskAsFinished(final String taskId, final TextSearchPatternEngine.SearchResult result) {
+        final var statusToUpdate = getTaskStatus(taskId);
+        final var taskResult = new TaskStatus.TaskResult(result.position(), result.typos());
+        taskStatusRepository.save(statusToUpdate.asFinished(taskResult));
+    }
+
+    public Optional<TaskStatus> getTaskStatusOpt(final String taskId) {
+        return taskStatusRepository.findById(taskId);
+    }
+
+    TaskStatus getTaskStatus(final String taskId) {
+        return getTaskStatusOpt(taskId).orElseThrow();
     }
 }

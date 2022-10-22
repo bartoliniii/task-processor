@@ -49,19 +49,20 @@ class TaskController {
         }
     }
 
-    private final TaskStatusService taskService;
+    private final CreateTaskService createTaskService;
+    private final TaskStatusService taskStatusService;
 
     @PostMapping
     public CreateTaskResponse createTask(@RequestBody @Valid final CreateTaskRequest task) {
         log.info("called createTask with params: {}", task);
-        final String createdTaskId = taskService.createTask(task.input, task.pattern).id();
+        final String createdTaskId = createTaskService.createTask(task.input, task.pattern).id();
         return new CreateTaskResponse(createdTaskId);
     }
 
     @GetMapping("/{id}")
     public TaskResultResponse getTask(@PathVariable final String id) {
         log.debug("called getTask for id: {}", id);
-        return taskService.getTaskStatus(id)
+        return taskStatusService.getTaskStatusOpt(id)
                 .map(TaskResultResponse::create)
                 .orElseThrow(this::notFoundException);
     }
@@ -69,7 +70,7 @@ class TaskController {
     @GetMapping
     public List<TaskResultResponse> getTasks() {
         log.debug("called getTasks");
-        final var taskStatuses = taskService.getAllTaskStatuses();
+        final var taskStatuses = taskStatusService.getAllTaskStatuses();
         return StreamSupport.stream(taskStatuses.spliterator(), false)
                 .map(TaskResultResponse::create)
                 .toList();
