@@ -24,6 +24,8 @@ spring:
           multiplier: 3
 
 taskProcessor:
+  cache:
+    defaultCacheDurationMs: 500
   rabbitmq:
     taskProcessorEnabled: true
     tasksQueueName: "dev-tasks"

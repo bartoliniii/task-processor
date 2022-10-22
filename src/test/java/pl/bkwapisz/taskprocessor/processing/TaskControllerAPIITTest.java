@@ -11,12 +11,15 @@ import org.junit.jupiter.params.provider.CsvSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.test.mock.mockito.SpyBean;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.ResultActions;
 import pl.bkwapisz.taskprocessor.TaskProcessorAbstractIntegrationTest;
 
 import static org.hamcrest.Matchers.*;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
@@ -28,6 +31,9 @@ class TaskControllerAPIITTest extends TaskProcessorAbstractIntegrationTest {
 
     @Autowired
     private MockMvc mockMvc;
+
+    @SpyBean
+    private TaskStatusService taskStatusService;
 
     @Test
     void shouldCreateNewTaskAndReturnId() throws Exception {
@@ -67,7 +73,7 @@ class TaskControllerAPIITTest extends TaskProcessorAbstractIntegrationTest {
                 .andExpect(content().contentType(MediaType.APPLICATION_JSON))
                 .andReturn()
                 .getResponse();
-        log.info("got response: {}", response.getContentAsString());
+        log.info("create task response: {}", response.getContentAsString());
         final var taskId = JsonPath.read(response.getContentAsString(), "$.id");
 
         // then
@@ -76,6 +82,39 @@ class TaskControllerAPIITTest extends TaskProcessorAbstractIntegrationTest {
                 .andExpect(jsonPath("$.id", equalTo(taskId)))
                 .andExpect(jsonPath("$.status", equalTo("new")))
                 .andExpect(jsonPath("$.progress", equalTo("0%")));
+    }
+
+    @Test
+    void shouldCacheGetTaskEndpoint() throws Exception {
+        // given
+        reset(taskStatusService);
+        final var response = callCreateTask(TaskInputForTestRequest.createNotEmpty())
+                .andExpect(status().isOk())
+                .andReturn()
+                .getResponse();
+        log.info("create task response: {}", response.getContentAsString());
+        final String taskId = JsonPath.read(response.getContentAsString(), "$.id");
+
+        // when
+        mockMvc.perform(get("/task/{id}", taskId))
+                .andExpect(status().isOk());
+        mockMvc.perform(get("/task/{id}", taskId))
+                .andExpect(status().isOk());
+
+        // then
+        verify(taskStatusService, times(1)).getTaskStatusOpt(eq(taskId));
+    }
+
+    @Test
+    void shouldCacheGetAllTasksEndpoint() throws Exception {
+        // when
+        mockMvc.perform(get("/task"))
+                .andExpect(status().isOk());
+        mockMvc.perform(get("/task"))
+                .andExpect(status().isOk());
+
+        // then
+        verify(taskStatusService, times(1)).getAllTaskStatuses();
     }
 
     @NotNull

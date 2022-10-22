@@ -2,6 +2,7 @@ package pl.bkwapisz.taskprocessor.processing;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
 
@@ -60,6 +61,7 @@ class TaskController {
     }
 
     @GetMapping("/{id}")
+    @Cacheable("apiGetTask")
     public TaskResultResponse getTask(@PathVariable final String id) {
         log.debug("called getTask for id: {}", id);
         return taskStatusService.getTaskStatusOpt(id)
@@ -68,6 +70,7 @@ class TaskController {
     }
 
     @GetMapping
+    @Cacheable("apiGetAllTasks")
     public List<TaskResultResponse> getTasks() {
         log.debug("called getTasks");
         final var taskStatuses = taskStatusService.getAllTaskStatuses();
