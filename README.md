@@ -5,9 +5,6 @@ store status/result in MongoDB and expose REST API that allows to create task an
 
 Tests are based on testcontainers, so running Docker engine is required to run tests.
 
-Unfortunately build of application is relative long (mainly because of preparing and starting containers),
-so there is the place for future improvement.
-
 ### Limitations
 Because of use testcontainers framework to build integration tests you have to have docker daemon available on localhost
 
