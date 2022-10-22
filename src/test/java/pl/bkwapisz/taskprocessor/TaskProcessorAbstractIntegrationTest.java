@@ -30,10 +30,10 @@ public abstract class TaskProcessorAbstractIntegrationTest {
     protected ObjectMapper objectMapper;
 
     @Container
-    private static MongoDBContainer MONGODB_CONTAINER = new MongoDBContainer("mongo:6.0");
+    private static final MongoDBContainer MONGODB_CONTAINER = new MongoDBContainer("mongo:6.0");
 
     @Container
-    private static RabbitMQContainer RABBITMQ_CONTAINER = new RabbitMQContainer("rabbitmq:3.11");
+    private static final RabbitMQContainer RABBITMQ_CONTAINER = new RabbitMQContainer("rabbitmq:3.11");
 
     @DynamicPropertySource
     static void setupContainersProperties(DynamicPropertyRegistry registry) {

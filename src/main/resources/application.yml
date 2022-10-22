@@ -6,6 +6,7 @@ logging:
 spring:
   jackson:
     default-property-inclusion: NON_NULL
+    serialization.indent_output: true
   data:
     mongodb:
       uri: ${MONGO_URI:mongodb://localhost/test}
